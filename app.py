@@ -1,4 +1,4 @@
-from flask import Flask, request, url_for, render_template
+from flask import Flask, request, url_for, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -54,6 +54,19 @@ def add_user():
     else:
         return 'Weclome back, %s' % request.form['username']
 
+@app.route('/userpage')
+def user_page():
+    user = User.query.filter_by(username='one').first()
+    return render_template('userpage.html', items=user.items)
+
+@app.route('/addeditem', methods=['POST'])
+def add_item():
+    user = User.query.filter_by(username='one').first()
+    newItem = Item(name=request.form['newitem'],user_id=user.id)
+    db.session.add(newItem)
+    db.session.commit()
+    return redirect('/userpage', code=302, Response=None)
+
 @app.route('/userlist')
 def user_list():
     #list all users
@@ -65,9 +78,16 @@ def get_username(user):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    items = db.relationship('Item', backref='user', lazy=True)
     
     def __repr__(self):
         return '<User %r>' % self.username
+
+class Item(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+            nullable=False)
 
 if __name__ == '__main__':
     app.run()

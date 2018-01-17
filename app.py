@@ -54,6 +54,14 @@ def add_user():
     else:
         return 'Weclome back, %s' % request.form['username']
 
+@app.route('/userlist')
+def user_list():
+    #list all users
+    return '%s' % map(get_username, User.query.all());
+
+def get_username(user):
+    return user.username;
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)

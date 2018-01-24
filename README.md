@@ -11,3 +11,5 @@ Then run: sudo restart postgres
 run postgres with: psql -U postgres
 
 go to /userlist to see list of users
+
+To migrate database, run flask db upgrade

@@ -67,6 +67,15 @@ def add_item():
     db.session.commit()
     return redirect('/userpage', code=302, Response=None)
 
+@app.route('/removeditem', methods=['POST'])
+def remove_item():
+    user = User.query.filter_by(username='one').first()
+    itemId = request.args.get('id', '')
+    removedItem = Item.query.filter_by(id=itemId).first()
+    db.session.delete(removedItem)
+    db.session.commit()
+    return redirect('/userpage', code=302, Response=None)
+
 @app.route('/userlist')
 def user_list():
     #list all users

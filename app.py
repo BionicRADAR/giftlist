@@ -50,9 +50,9 @@ def add_user():
         newUser = User(username=request.form['username'])
         db.session.add(newUser)
         db.session.commit()
-        return 'Weclome, new user %s' % request.form['username']
+        return 'Welcome, new user %s' % request.form['username']
     else:
-        return 'Weclome back, %s' % request.form['username']
+        return 'Welcome back, %s' % request.form['username']
 
 @app.route('/userpage')
 def user_page():

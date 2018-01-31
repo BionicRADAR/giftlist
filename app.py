@@ -15,20 +15,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(pw)s@%(host)s:%
 
 #Here is stuff that could go in models.py
 db = SQLAlchemy()
-
-class BaseModel(db.Model):
-    """Base data model for all objects"""
-    __abstract__ = True
-    #define here __repr__ and json methods or any common method
-    #that you need for all your models
-
-class User(BaseModel):
-    """model for one of your tables"""
-    __tablename__ = 'users'
-    #define your model
-    id = db.Column(db.Integer, primary_key = True)
-    name = db.Column(db.String)
-
 #end models.py
 
 
@@ -52,48 +38,77 @@ def add_user():
         db.session.commit()
     return redirect(url_for('user_list'))
 
-@app.route('/userpage/<int:userid>')
+@app.route('/user/<int:userid>')
 def user_page(userid):
     user = User.query.filter_by(id=userid).first()
-    return render_template('userpage.html', items=user.items, userid=userid)
+    return render_template('userpage.html', lists=user.lists, userid=userid)
 
-@app.route('/addeditem/<int:userid>', methods=['POST'])
-def add_item(userid):
+@app.route('/user/<int:userid>/addedlist', methods=['POST'])
+def add_list(userid):
     user = User.query.filter_by(id=userid).first()
-    newItem = Item(name=request.form['newitem'],user_id=user.id)
-    db.session.add(newItem)
+    newList = Wishlist(name=request.form['newlist'],user_id=user.id)
+    db.session.add(newList)
+    db.session.commit()
+    return redirect(url_for('list_page', userid=userid, listid=newList.id), code=302, Response=None)
+
+@app.route('/user/<int:userid>/removedlist', methods=['POST'])
+def remove_list(userid):
+    user = User.query.filter_by(id=userid).first()
+    listId = request.args.get('id', '')
+    removedList = Wishlist.query.filter_by(id=listId).first()
+    db.session.delete(removedList)
     db.session.commit()
     return redirect(url_for('user_page', userid=userid), code=302, Response=None)
 
-@app.route('/removeditem/<int:userid>', methods=['POST'])
-def remove_item(userid):
-    user = User.query.filter_by(id=userid).first()
+@app.route('/user/<int:userid>/list/<int:listid>')
+def list_page(userid, listid):
+    wishlist = Wishlist.query.filter_by(id=listid).first()
+    return render_template('listpage.html', items=wishlist.items, listid=listid, userid=userid)
+
+@app.route('/user/<int:userid>/list/<int:listid>/addeditem', methods=['POST'])
+def add_item(userid, listid):
+    wishlist = Wishlist.query.filter_by(id=listid).first()
+    newItem = Item(name=request.form['newitem'],list_id=wishlist.id)
+    db.session.add(newItem)
+    db.session.commit()
+    return redirect(url_for('list_page', userid=userid, listid=listid), code=302, Response=None)
+
+@app.route('/user/<int:userid>/list/<int:listid>/removeditem', methods=['POST'])
+def remove_item(userid, listid):
+    wishlist = User.query.filter_by(id=listid).first()
     itemId = request.args.get('id', '')
     removedItem = Item.query.filter_by(id=itemId).first()
     db.session.delete(removedItem)
     db.session.commit()
-    return redirect(url_for('user_page', userid=userid), code=302, Response=None)
+    return redirect(url_for('list_page', userid=userid, listid=listid), code=302, Response=None)
 
 @app.route('/users')
 def user_list():
-    #list all users
     return render_template('users.html', users=User.query.all())
 
 def get_username(user):
     return user.username
 
 class User(db.Model):
+    __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    items = db.relationship('Item', backref='user', lazy=True)
+    lists = db.relationship('Wishlist', backref='users', lazy=True, cascade="all, delete-orphan")
     
     def __repr__(self):
         return '<User %r>' % self.username
 
+class Wishlist(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(80), nullable=False)
+	items = db.relationship('Item', backref='wishlist', lazy=True, cascade="all, delete-orphan")
+	user_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+			nullable=False)
+
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+    list_id = db.Column(db.Integer, db.ForeignKey('wishlist.id'),
             nullable=False)
 
 if __name__ == '__main__':

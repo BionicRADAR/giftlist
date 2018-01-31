@@ -50,39 +50,37 @@ def add_user():
         newUser = User(username=request.form['username'])
         db.session.add(newUser)
         db.session.commit()
-        return 'Welcome, new user %s' % request.form['username']
-    else:
-        return 'Welcome back, %s' % request.form['username']
+    return redirect(url_for('user_list'))
 
-@app.route('/userpage')
-def user_page():
-    user = User.query.filter_by(username='one').first()
-    return render_template('userpage.html', items=user.items)
+@app.route('/userpage/<int:userid>')
+def user_page(userid):
+    user = User.query.filter_by(id=userid).first()
+    return render_template('userpage.html', items=user.items, userid=userid)
 
-@app.route('/addeditem', methods=['POST'])
-def add_item():
-    user = User.query.filter_by(username='one').first()
+@app.route('/addeditem/<int:userid>', methods=['POST'])
+def add_item(userid):
+    user = User.query.filter_by(id=userid).first()
     newItem = Item(name=request.form['newitem'],user_id=user.id)
     db.session.add(newItem)
     db.session.commit()
-    return redirect('/userpage', code=302, Response=None)
+    return redirect(url_for('user_page', userid=userid), code=302, Response=None)
 
-@app.route('/removeditem', methods=['POST'])
-def remove_item():
-    user = User.query.filter_by(username='one').first()
+@app.route('/removeditem/<int:userid>', methods=['POST'])
+def remove_item(userid):
+    user = User.query.filter_by(id=userid).first()
     itemId = request.args.get('id', '')
     removedItem = Item.query.filter_by(id=itemId).first()
     db.session.delete(removedItem)
     db.session.commit()
-    return redirect('/userpage', code=302, Response=None)
+    return redirect(url_for('user_page', userid=userid), code=302, Response=None)
 
-@app.route('/userlist')
+@app.route('/users')
 def user_list():
     #list all users
-    return '%s' % map(get_username, User.query.all());
+    return render_template('users.html', users=User.query.all())
 
 def get_username(user):
-    return user.username;
+    return user.username
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)

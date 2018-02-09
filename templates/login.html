@@ -1,9 +1,17 @@
-{% extends "layout.html" %}
-{% block body %}
-	<form action="{{ url_for('add_user') }}" method="post">
+{% extends "basiclayout.html" %}
+{% block title %}Giftlist Login{% endblock %}
+{% block fullbody %}
+	<form action="{{ url_for('add_session') }}" method="post">
 		<label>Enter your username
+			<input type="text" size="30" name="username">
+		</label>
+		<input type="submit" value="Log in">
+	</form>
+	<form action="{{ url_for('add_user') }}" method="post">
+		<label>Not a user? Enter a new username below!
 			<input type="text" size="30" name="username">
 		</label>
 		<input type="submit" value="Make User">
 	</form>
 {% endblock %}
+

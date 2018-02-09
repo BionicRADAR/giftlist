@@ -1,14 +1,6 @@
-<!doctype html>
-<html>
-<head>
-	<title>Layout</title>
-	<link rel="stylesheet" href="../static/styles.css">
-</head>
-<body>
+{% extends "basiclayout.html" %}
+{% block fullbody %}
 {% include 'navbar.html' %}
-<div class="page">
-	{% block body %}
-	{% endblock %}
-</div>
-</body>
-</html>
+{% block body %}
+{% endblock %}
+{% endblock %}

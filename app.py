@@ -1,4 +1,4 @@
-from flask import Flask, request, url_for, render_template, redirect
+from flask import Flask, request, url_for, render_template, redirect, flash, session
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -11,6 +11,7 @@ POSTGRES = {
     'port': '5432'
 }
 app.config['DEBUG'] = True
+app.secret_key = 'secret key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
 
 #Here is stuff that could go in models.py
@@ -31,17 +32,27 @@ def goodbye_cruel_world():
 @app.route('/add', methods=['POST'])
 def add_user():
     #if user not in table, add the user to the users table
-    print('%s') % User.query.filter_by(username=request.form['username']).all()
     if not User.query.filter_by(username=request.form['username']).all():
         newUser = User(username=request.form['username'])
         db.session.add(newUser)
         db.session.commit()
-    return redirect(url_for('user_list'))
+        return redirect(url_for('user_list'))
+    else:
+        flash('Error: user with that name already exists.')
+        return redirect(url_for('login'))
 
+@app.route('/add_session', methods=['POST'])
+def add_session():
+    if User.query.filter_by(username=request.form['username']).all():
+        return redirect(url_for('user_list'))
+    else:
+        flash('Error: no user exists with that name.')
+        return redirect(url_for('login'))
+		
 @app.route('/user/<int:userid>')
 def user_page(userid):
     user = User.query.filter_by(id=userid).first()
-    return render_template('userpage.html', lists=user.lists, userid=userid)
+    return render_template('userpage.html', lists=user.lists, userid=userid, username=user.username)
 
 @app.route('/user/<int:userid>/addedlist', methods=['POST'])
 def add_list(userid):
@@ -63,7 +74,7 @@ def remove_list(userid):
 @app.route('/user/<int:userid>/list/<int:listid>')
 def list_page(userid, listid):
     wishlist = Wishlist.query.filter_by(id=listid).first()
-    return render_template('listpage.html', items=wishlist.items, listid=listid, userid=userid)
+    return render_template('listpage.html', items=wishlist.items, listid=listid, userid=userid, wishlist=wishlist)
 
 @app.route('/user/<int:userid>/list/<int:listid>/addeditem', methods=['POST'])
 def add_item(userid, listid):

@@ -1,5 +1,6 @@
 from flask import Flask, request, url_for, render_template, redirect, flash, session
 from flask_sqlalchemy import SQLAlchemy
+from hashlib import sha256
 
 app = Flask(__name__)
 
@@ -33,7 +34,7 @@ def goodbye_cruel_world():
 def add_user():
     #if user not in table, add the user to the users table
     if not User.query.filter_by(username=request.form['username']).all():
-        newUser = User(username=request.form['username'])
+        newUser = User(username=request.form['username'], password=sha256(request.form['password']).hexdigest())
         db.session.add(newUser)
         db.session.commit()
         return redirect(url_for('user_list'))
@@ -43,12 +44,17 @@ def add_user():
 
 @app.route('/add_session', methods=['POST'])
 def add_session():
-    if User.query.filter_by(username=request.form['username']).all():
-        return redirect(url_for('user_list'))
+    user = User.query.filter_by(username=request.form['username']).first()
+    if user:
+        if user.password == sha256(request.form['password']).hexdigest():
+            return redirect(url_for('user_list'))
+        else:
+            flash('Error: incorrect password')
+            return redirect(url_for('login'))
     else:
         flash('Error: no user exists with that name.')
         return redirect(url_for('login'))
-		
+
 @app.route('/user/<int:userid>')
 def user_page(userid):
     user = User.query.filter_by(id=userid).first()
@@ -105,6 +111,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     lists = db.relationship('Wishlist', backref='users', lazy=True, cascade="all, delete-orphan")
+    password = db.Column(db.String(64), nullable=False)
     
     def __repr__(self):
         return '<User %r>' % self.username

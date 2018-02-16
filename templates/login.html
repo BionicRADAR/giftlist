@@ -2,16 +2,38 @@
 {% block title %}Giftlist Login{% endblock %}
 {% block fullbody %}
 	<form action="{{ url_for('add_session') }}" method="post">
-		<label>Enter your username
+		<div>
+		<label>Username:
 			<input type="text" size="30" name="username">
 		</label>
+		</div>
+		<div>
+		<label>Password: 
+			<input type="password" size="30" name="password">
+		</label>
+		</div>
+		<div>
 		<input type="submit" value="Log in">
+		</div>
 	</form>
 	<form action="{{ url_for('add_user') }}" method="post">
-		<label>Not a user? Enter a new username below!
+		<div>
+		<label>Not a user? Enter a new username and password below!
+		</label>
+		</div>
+		<div>
+		<label>Username:
 			<input type="text" size="30" name="username">
 		</label>
-		<input type="submit" value="Make User">
+		</div>
+		<div>
+		<label>Password:
+			<input type="text" size="30" name="password">
+		</label>
+		</div>
+		<div>
+			<input type="submit" value="Make User">
+		</div>
 	</form>
 {% endblock %}
 

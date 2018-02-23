@@ -15,6 +15,8 @@ app.config['DEBUG'] = True
 app.secret_key = 'secret key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
 
+salt = "ADGHi3298h2f2h@#%@(awhg9";
+
 #Here is stuff that could go in models.py
 db = SQLAlchemy()
 #end models.py
@@ -34,7 +36,7 @@ def goodbye_cruel_world():
 def add_user():
     #if user not in table, add the user to the users table
     if not User.query.filter_by(username=request.form['username']).all():
-        newUser = User(username=request.form['username'], password=sha256(request.form['password']).hexdigest())
+        newUser = User(username=request.form['username'], password=sha256(salt + request.form['password']).hexdigest())
         db.session.add(newUser)
         db.session.commit()
         return redirect(url_for('user_list'))
@@ -46,7 +48,7 @@ def add_user():
 def add_session():
     user = User.query.filter_by(username=request.form['username']).first()
     if user:
-        if user.password == sha256(request.form['password']).hexdigest():
+        if user.password == sha256(salt + request.form['password']).hexdigest():
             return redirect(url_for('user_list'))
         else:
             flash('Error: incorrect password')

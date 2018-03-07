@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from hashlib import sha256
 from functools import wraps
 import random
+import time
 
 app = Flask(__name__)
 
@@ -18,7 +19,7 @@ app.secret_key = 'secret key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
 
 salt = "ADGHi3298h2f2h@#%@(awhg9"
-cookiename = 'gift_list_session_cookie'
+auth_duration = 86400
 
 #Here is stuff that could go in models.py
 db = SQLAlchemy()
@@ -30,7 +31,8 @@ db.init_app(app)
 def check_session(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if Session.query.filter_by(hashid=request.cookies.get(cookiename)).all():
+        if 'userid' in session:
+            user = User.query.filter_by(id=session['userid']).first()
             return f(*args, **kwargs)
         flash("Error: not logged in")
         return redirect(url_for('login'))
@@ -43,7 +45,7 @@ def login():
 @app.route('/bye')
 def goodbye_cruel_world():
     resp = make_response('Goodbye, cruel world!')
-    resp.set_cookie(cookiename, expires=0)
+    session.pop('userid', None)
     return resp
 
 @app.route('/add', methods=['POST'])
@@ -59,12 +61,8 @@ def add_user():
         return redirect(url_for('login'))
 
 def make_session(userid):
-    hashid = hex(random.getrandbits(128))[2:-1]
-    newSession = Session(hashid=hashid, user_id=userid)
-    db.session.add(newSession)
-    db.session.commit()
+    session['userid'] = userid
     resp = make_response(redirect(url_for('user_list')))
-    resp.set_cookie(cookiename, hashid)
     return resp
 
 @app.route('/add_session', methods=['POST'])
@@ -160,10 +158,6 @@ class Item(db.Model):
     name = db.Column(db.String(80), unique=True, nullable=False)
     list_id = db.Column(db.Integer, db.ForeignKey('wishlist.id'),
             nullable=False)
-
-class Session(db.Model):
-    hashid = db.Column(db.String(64), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
 if __name__ == '__main__':
     app.run()

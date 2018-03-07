@@ -82,7 +82,7 @@ def add_session():
 @check_session
 def user_page(userid):
     user = User.query.filter_by(id=userid).first()
-    return render_template('userpage.html', lists=user.lists, userid=userid, username=user.username)
+    return render_template('userpage.html', lists=user.lists, userid=userid, username=user.username, usermatch=userid==session['userid'])
 
 @app.route('/user/<int:userid>/addedlist', methods=['POST'])
 @check_session
@@ -107,7 +107,7 @@ def remove_list(userid):
 @check_session
 def list_page(userid, listid):
     wishlist = Wishlist.query.filter_by(id=listid).first()
-    return render_template('listpage.html', items=wishlist.items, listid=listid, userid=userid, wishlist=wishlist)
+    return render_template('listpage.html', items=wishlist.items, listid=listid, userid=userid, wishlist=wishlist, usermatch=userid==session['userid'])
 
 @app.route('/user/<int:userid>/list/<int:listid>/addeditem', methods=['POST'])
 @check_session
@@ -131,7 +131,23 @@ def remove_item(userid, listid):
 @app.route('/users')
 @check_session
 def user_list():
-    return render_template('users.html', users=User.query.all())
+    return render_template('users.html', loggeduser=User.query.filter_by(id=session['userid']).first(), users=User.query.filter(User.id != session['userid']).all())
+
+@app.route('/user/<int:userid>/list/<int:listid>/purchaseditem', methods=['POST'])
+@check_session
+def purchase_item(userid, listid):
+    change_purchaser(request.args.get('id', ''), session['userid'])
+    return redirect(url_for('list_page', userid=userid, listid=listid), code=302, Response=None)
+
+@app.route('/user/<int:userid>/list/<int:listid>/unpurchaseditem', methods=['POST'])
+@check_session
+def unpurchase_item(userid, listid):
+    change_purchaser(request.args.get('id', ''), None)
+    return redirect(url_for('list_page', userid=userid, listid=listid), code=302, Response=None)
+
+def change_purchaser(itemid, newpurchaser): 
+    Item.query.filter_by(id=itemid).first().purchaser_id = newpurchaser
+    db.session.commit()
 
 def get_username(user):
     return user.username
@@ -142,6 +158,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     lists = db.relationship('Wishlist', backref='users', lazy=True, cascade="all, delete-orphan")
     password = db.Column(db.String(64), nullable=False)
+    purchased_items = db.relationship('Item', backref='users', lazy=True, cascade="all, delete-orphan")
     
     def __repr__(self):
         return '<User %r>' % self.username
@@ -158,6 +175,7 @@ class Item(db.Model):
     name = db.Column(db.String(80), unique=True, nullable=False)
     list_id = db.Column(db.Integer, db.ForeignKey('wishlist.id'),
             nullable=False)
+    purchaser_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
 if __name__ == '__main__':
     app.run()

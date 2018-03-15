@@ -42,11 +42,10 @@ def check_session(f):
 def login():
     return render_template('login.html')
 
-@app.route('/bye')
-def goodbye_cruel_world():
-    resp = make_response('Goodbye, cruel world!')
+@app.route('/logout')
+def logout():
     session.pop('userid', None)
-    return resp
+    return redirect(url_for('login'))
 
 @app.route('/add', methods=['POST'])
 def add_user():
@@ -113,7 +112,7 @@ def list_page(userid, listid):
 @check_session
 def add_item(userid, listid):
     wishlist = Wishlist.query.filter_by(id=listid).first()
-    newItem = Item(name=request.form['newitem'],list_id=wishlist.id)
+    newItem = Item(name=request.form['newitem'],list_id=wishlist.id,link=request.form['link'],recurring='recurring' in request.form)
     db.session.add(newItem)
     db.session.commit()
     return redirect(url_for('list_page', userid=userid, listid=listid), code=302, Response=None)
@@ -176,6 +175,8 @@ class Item(db.Model):
     list_id = db.Column(db.Integer, db.ForeignKey('wishlist.id'),
             nullable=False)
     purchaser_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    link = db.Column(db.String)
+    recurring = db.Column(db.Boolean, default=False)
 
 if __name__ == '__main__':
     app.run()

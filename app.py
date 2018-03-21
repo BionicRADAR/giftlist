@@ -1,24 +1,26 @@
-from flask import Flask, request, url_for, render_template, redirect, flash, session, make_response
+from flask import Flask, request, url_for, render_template, redirect, flash, session, make_response, g
 from flask_sqlalchemy import SQLAlchemy
 from hashlib import sha256
 from functools import wraps
+import secrets
 import random
 import time
+import os
 
 app = Flask(__name__)
 
 POSTGRES = {
     'user': 'postgres',
-    'pw': 'password',
+    'pw': os.environ.get('postgrespass'),
     'db': 'giftlistdb',
     'host': 'localhost',
     'port': '5432'
 }
 app.config['DEBUG'] = True
-app.secret_key = 'secret key'
+app.secret_key = os.environ.get('secret_key')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
 
-salt = "ADGHi3298h2f2h@#%@(awhg9"
+salt = os.environ.get('salt')
 auth_duration = 86400
 
 #Here is stuff that could go in models.py
@@ -163,11 +165,10 @@ class User(db.Model):
         return '<User %r>' % self.username
 
 class Wishlist(db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	name = db.Column(db.String(80), nullable=False)
-	items = db.relationship('Item', backref='wishlist', lazy=True, cascade="all, delete-orphan")
-	user_id = db.Column(db.Integer, db.ForeignKey('users.id'),
-			nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    items = db.relationship('Item', backref='wishlist', lazy=True, cascade="all, delete-orphan")
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)

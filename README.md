@@ -1,6 +1,9 @@
 # giftlist
 A gift list tool
 
+A web application for keeping track of gift wishlists for holidays, birthdays,
+and the like.
+
 To run locally: heroku local web
 
 To get access to postgresql, make sure /etc/postgresql/9.6/main/pg_hba.conf has the line:

@@ -106,7 +106,7 @@ def remove_list(userid):
 @check_session
 def list_page(userid, listid):
     wishlist = Wishlist.query.filter_by(id=listid).first()
-    return render_template('listpage.html', items=wishlist.items, listid=listid, userid=userid, wishlist=wishlist, usermatch=userid==session['userid'])
+    return render_template('listpage.html', items=Item.query.filter_by(list_id=wishlist.id).order_by(Item.id), listid=listid, userid=userid, wishlist=wishlist, usermatch=userid==session['userid'])
 
 @app.route('/user/<int:userid>/list/<int:listid>/addeditem', methods=['POST'])
 @check_session
